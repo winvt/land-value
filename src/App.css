@@ -1747,3 +1747,218 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Data Status Styles */
+.data-status {
+  margin: 20px 0;
+  padding: 20px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  border: 1px solid #e2e8f0;
+}
+
+.status-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.status-error {
+  color: #dc2626;
+  font-weight: 500;
+  padding: 12px;
+  background: #fef2f2;
+  border-radius: 8px;
+  border: 1px solid #fecaca;
+}
+
+.status-success {
+  color: #059669;
+}
+
+.status-success h4 {
+  margin: 0 0 16px 0;
+  color: #059669;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.data-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.stat-label {
+  font-weight: 500;
+  color: #64748b;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.top-districts h5 {
+  margin: 0 0 12px 0;
+  color: #1e293b;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.district-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.district-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+}
+
+.district-rank {
+  font-weight: 600;
+  color: #059669;
+  min-width: 30px;
+}
+
+.district-name {
+  font-weight: 500;
+  color: #1e293b;
+  flex: 1;
+}
+
+.district-price {
+  font-weight: 600;
+  color: #059669;
+}
+
+.district-count {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.district-quality {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.district-quality.high {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.district-quality.medium {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.data-quality {
+  margin: 20px 0;
+}
+
+.data-quality h5 {
+  margin: 0 0 12px 0;
+  color: #1e293b;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.quality-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.quality-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.quality-label {
+  font-weight: 500;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.quality-value {
+  font-weight: 600;
+  color: #059669;
+  font-size: 14px;
+}
+
+.debug-info {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.debug-info h5 {
+  margin: 0 0 12px 0;
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.debug-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.debug-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.debug-label {
+  font-weight: 500;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.debug-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.debug-district {
+  font-size: 12px;
+  color: #374151;
+  padding: 4px 8px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}

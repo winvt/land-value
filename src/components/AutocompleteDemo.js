@@ -1,151 +1,96 @@
-import React, { useState } from 'react';
-import AutocompleteInput from './AutocompleteInput';
+import React, { useState, useEffect, useRef } from 'react';
 
-const AutocompleteDemo = () => {
-  const [selectedLocation, setSelectedLocation] = useState(null);
+const AutocompleteDemo = ({ 
+  searchQuery, 
+  setSearchQuery, 
+  autocompleteResults, 
+  showAutocomplete, 
+  setShowAutocomplete, 
+  selectedAutocompleteIndex, 
+  setSelectedAutocompleteIndex, 
+  handleAutocompleteSelect, 
+  handleSearchInputChange, 
+  handleSearchInputKeyDown 
+}) => {
+  const inputRef = useRef(null);
 
-  const handleLocationSelect = (location) => {
-    setSelectedLocation(location);
-    console.log('📍 Selected location:', location);
+  useEffect(() => {
+    if (showAutocomplete && autocompleteResults.length > 0) {
+      setSelectedAutocompleteIndex(0);
+    }
+  }, [autocompleteResults, showAutocomplete]);
+
+  const handleInputChange = (e) => {
+    handleSearchInputChange(e);
+  };
+
+  const handleKeyDown = (e) => {
+    handleSearchInputKeyDown(e);
+  };
+
+  const handleItemClick = (suggestion) => {
+    handleAutocompleteSelect(suggestion);
+  };
+
+  const handleItemMouseEnter = (index) => {
+    setSelectedAutocompleteIndex(index);
   };
 
   return (
-    <div style={{ 
-      maxWidth: '600px', 
-      margin: '50px auto', 
-      padding: '20px',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    }}>
-      <h1 style={{ 
-        textAlign: 'center', 
-        color: '#1e293b',
-        marginBottom: '30px'
-      }}>
-        🗺️ Location Autocomplete Demo
-      </h1>
-      
-      <div style={{ marginBottom: '30px' }}>
-        <h3 style={{ color: '#374151', marginBottom: '10px' }}>
-          Try typing a location in Bangkok:
-        </h3>
-        <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '20px' }}>
-          Examples: "Min Buri", "Lat Krabang", "Suan Luang", "Prawet", "Bang Kapi"
-        </p>
-        
-        <AutocompleteInput
-          placeholder="Enter a location in Bangkok..."
-          onLocationSelect={handleLocationSelect}
-          style={{ marginBottom: '20px' }}
+    <div className="search-container">
+      <div className="search-input-wrapper">
+        <input
+          ref={inputRef}
+          type="text"
+          value={searchQuery}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          placeholder="Search for a Bangkok district..."
+          className="search-input"
         />
+        <button 
+          onClick={() => handleAutocompleteSelect({ name: searchQuery })}
+          className="search-button"
+        >
+          <Icon path="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </button>
       </div>
 
-      {selectedLocation && (
-        <div style={{
-          background: '#f8fafc',
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          padding: '20px',
-          marginTop: '20px'
-        }}>
-          <h3 style={{ color: '#1e293b', marginBottom: '15px' }}>
-            ✅ Selected Location
-          </h3>
-          
-          <div style={{ display: 'grid', gap: '10px' }}>
-            <div>
-              <strong style={{ color: '#374151' }}>Name:</strong>
-              <span style={{ marginLeft: '10px', color: '#6b7280' }}>
-                {selectedLocation.displayText || selectedLocation.name}
-              </span>
-            </div>
-            
-            <div>
-              <strong style={{ color: '#374151' }}>Type:</strong>
-              <span style={{ 
-                marginLeft: '10px', 
-                backgroundColor: '#f3f4f6',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                fontSize: '12px',
-                textTransform: 'uppercase',
-                color: '#6b7280'
-              }}>
-                {selectedLocation.objectType}
-              </span>
-            </div>
-            
-            {selectedLocation.displayDescription && (
-              <div>
-                <strong style={{ color: '#374151' }}>Description:</strong>
-                <span style={{ marginLeft: '10px', color: '#6b7280' }}>
-                  {selectedLocation.displayDescription}
-                </span>
+      {showAutocomplete && autocompleteResults.length > 0 && (
+        <div className="autocomplete-dropdown">
+          {autocompleteResults.map((suggestion, index) => (
+            <div
+              key={suggestion.id || index}
+              className={`autocomplete-item ${index === selectedAutocompleteIndex ? 'selected' : ''}`}
+              onClick={() => handleItemClick(suggestion)}
+              onMouseEnter={() => handleItemMouseEnter(index)}
+            >
+              <div className="autocomplete-text">
+                <span className="autocomplete-main">{suggestion.name}</span>
+                {suggestion.type && (
+                  <span className="autocomplete-type">{suggestion.type}</span>
+                )}
               </div>
-            )}
-            
-            {selectedLocation.latitude && selectedLocation.longitude && (
-              <div>
-                <strong style={{ color: '#374151' }}>Coordinates:</strong>
-                <span style={{ 
-                  marginLeft: '10px', 
-                  color: '#9ca3af',
-                  fontFamily: 'monospace',
-                  fontSize: '14px'
-                }}>
-                  📍 {selectedLocation.latitude.toFixed(6)}, {selectedLocation.longitude.toFixed(6)}
-                </span>
+              <div className="autocomplete-description">
+                {suggestion.description}
               </div>
-            )}
-            
-            <div>
-              <strong style={{ color: '#374151' }}>Object ID:</strong>
-              <span style={{ marginLeft: '10px', color: '#6b7280', fontFamily: 'monospace' }}>
-                {selectedLocation.objectId}
-              </span>
+              {suggestion.coordinates && (
+                <div className="autocomplete-coords">
+                  📍 {suggestion.coordinates.lat.toFixed(4)}, {suggestion.coordinates.lng.toFixed(4)}
+                </div>
+              )}
             </div>
-          </div>
+          ))}
         </div>
       )}
-
-      <div style={{
-        background: '#f0f9ff',
-        border: '1px solid #bae6fd',
-        borderRadius: '8px',
-        padding: '20px',
-        marginTop: '30px'
-      }}>
-        <h3 style={{ color: '#0369a1', marginBottom: '15px' }}>
-          💡 Features
-        </h3>
-        <ul style={{ color: '#0369a1', fontSize: '14px', lineHeight: '1.6' }}>
-          <li>🔍 <strong>Real-time search:</strong> Type to see location suggestions</li>
-          <li>⌨️ <strong>Keyboard navigation:</strong> Use arrow keys, Enter, Escape</li>
-          <li>🖱️ <strong>Mouse interaction:</strong> Hover and click to select</li>
-          <li>📱 <strong>Responsive design:</strong> Works on mobile and desktop</li>
-          <li>🎭 <strong>Fallback data:</strong> Works without API key using mock data</li>
-          <li>⚡ <strong>Debounced search:</strong> 300ms delay to avoid excessive API calls</li>
-        </ul>
-      </div>
-
-      <div style={{
-        background: '#fef2f2',
-        border: '1px solid #fecaca',
-        borderRadius: '8px',
-        padding: '20px',
-        marginTop: '20px'
-      }}>
-        <h3 style={{ color: '#991b1b', marginBottom: '15px' }}>
-          🔧 Setup Instructions
-        </h3>
-        <ol style={{ color: '#991b1b', fontSize: '14px', lineHeight: '1.6' }}>
-          <li>Create a <code style={{ background: '#f1f5f9', padding: '2px 4px', borderRadius: '3px' }}>.env</code> file in your project root</li>
-          <li>Add your RapidAPI key: <code style={{ background: '#f1f5f9', padding: '2px 4px', borderRadius: '3px' }}>REACT_APP_RAPIDAPI_KEY=your_key_here</code></li>
-          <li>Get your API key from <a href="https://rapidapi.com/realtimeapi-realtimeapi-default/api/ddproperty-realtimeapi/" target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>DDproperty API on RapidAPI</a></li>
-          <li>Restart your development server</li>
-        </ol>
-      </div>
     </div>
   );
 };
+
+const Icon = ({ path, className = "icon" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+    <path strokeLinecap="round" strokeLinejoin="round" d={path} />
+  </svg>
+);
 
 export default AutocompleteDemo; 

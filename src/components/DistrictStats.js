@@ -3,15 +3,13 @@ import { DISTRICT_DATA, calculateMarketStats, calculateDistrictRanking, calculat
 
 // Helper function for simplified currency formatting
 const formatCurrency = (value) => {
-  if (value >= 1000000) {
-    const millions = (value / 1000000).toFixed(1);
-    return `${millions}M`;
-  } else if (value >= 1000) {
-    const thousands = (value / 1000).toFixed(0);
-    return `${thousands}K`;
-  } else {
-    return new Intl.NumberFormat('en-US').format(value);
+  // Handle NaN and invalid values
+  if (!value || isNaN(value) || value === 0) {
+    return 'N/A';
   }
+  
+  // Format as full number with commas
+  return new Intl.NumberFormat('en-US').format(value);
 };
 
 const DistrictStats = () => {
@@ -274,7 +272,9 @@ const DistrictStats = () => {
         <div className="category-stats">
           {['Premium', 'Mid-Range', 'Affordable', 'Budget'].map(category => {
             const districts = allDistricts.filter(d => d.priceCategory === category);
-            const avgPrice = districts.reduce((sum, d) => sum + d.avgPricePerWah, 0) / districts.length;
+            const avgPrice = districts.length > 0 
+              ? districts.reduce((sum, d) => sum + d.avgPricePerWah, 0) / districts.length 
+              : 0;
             
             return (
               <div key={category} className="category-stat">

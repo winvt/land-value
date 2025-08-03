@@ -3,6 +3,8 @@ import axios from 'axios';
 import './App.css';
 import AutocompleteDemo from './components/AutocompleteDemo';
 import DistrictStats from './components/DistrictStats';
+import DataStatus from './components/DataStatus';
+import AdvancedFactorAnalysis from './components/AdvancedFactorAnalysis';
 import { generateAIValuationWithDistrictData, DISTRICT_DATA, calculateMarketStats, calculateDistrictRanking, calculateMarketTrends } from './services/districtDataService';
 
 // --- API Configuration ---
@@ -10,7 +12,16 @@ const GOOGLE_MAPS_API_KEY = "AIzaSyCW9G1CBbrs87Gb9gUbhaYpwB0mnpQUGf4";
 const RAPID_HOST = "ddproperty-realtimeapi.p.rapidapi.com";
 const RAPID_BASE = `https://${RAPID_HOST}`;
 
-
+// --- All Bangkok District Names ---
+const ALL_BANGKOK_DISTRICTS = [
+  "Watthana", "Phra Khanong", "Phaya Thai", "Huai Khwang", "Yan Nawa", 
+  "Wang Thonglang", "Bangkok Yai", "Bang Kapi", "Suan Luang", "Chatuchak", 
+  "Thon Buri", "Prawet", "Bang Na", "Din Daeng", "Bang Khae", "Chom Thong", 
+  "Khan Na Yao", "Bang Phlat", "Phasi Charoen", "Lat Phrao", "Bang Khen", 
+  "Don Mueang", "Bueng Kum", "Taling Chan", "Bang Khun Thian", "Lak Si", 
+  "Saphan Sung", "Sai Mai", "Khlong Sam Wa", "Thawi Watthana", "Bang Bon", 
+  "Min Buri", "Nong Khaem", "Nong Chok", "Lat Krabang"
+];
 
 // --- Helper Components ---
 const Icon = ({ path, className = "stat-icon" }) => (
@@ -21,16 +32,12 @@ const Icon = ({ path, className = "stat-icon" }) => (
 
 // --- Helper function for simplified currency formatting ---
 const formatCurrency = (value, showUnit = false) => {
-  if (value >= 1000000) {
-    const millions = (value / 1000000).toFixed(1);
-    return showUnit ? `${millions}M THB` : `${millions}M`;
-  } else if (value >= 1000) {
-    const thousands = (value / 1000).toFixed(0);
-    return showUnit ? `${thousands}K THB` : `${thousands}K`;
-  } else {
-    const formatted = new Intl.NumberFormat('en-US').format(value);
-    return showUnit ? `${formatted} THB` : formatted;
-  }
+  // Ensure value is a number
+  const numValue = Number(value);
+  
+  // Format as full number with commas
+  const formatted = new Intl.NumberFormat('en-US').format(numValue);
+  return showUnit ? `${formatted} THB` : formatted;
 };
 
 // --- Helper to get DDproperty location object ---
@@ -59,17 +66,17 @@ async function getDDPropertyLocationObject(query, headers) {
   }
 }
 
-// --- Auto-complete function using Google Places API ---
+// --- Enhanced Auto-complete function for district search ---
 async function getAutocompleteSuggestions(query, headers) {
   try {
-    if (!query.trim() || query.length < 2) {
+    if (!query.trim() || query.length < 1) {
       return [];
     }
     
     console.log('🔍 Getting district suggestions for:', query);
     
-    // Get district suggestions only
-    const districtResults = getMockAutocompleteSuggestions(query);
+    // Get district suggestions from our comprehensive list
+    const districtResults = getDistrictAutocompleteSuggestions(query);
     console.log('📋 District suggestions:', districtResults.length, 'items');
     
     return districtResults;
@@ -79,87 +86,86 @@ async function getAutocompleteSuggestions(query, headers) {
   }
 }
 
-// --- Mock auto-complete suggestions ---
-function getMockAutocompleteSuggestions(query) {
-  // Create suggestions from our district data
-  const districtSuggestions = Object.keys(DISTRICT_DATA).map(districtName => {
-    const districtCenters = {
-      "Lat Phrao": { lat: 13.8133, lng: 100.7324 },
-      "Watthana": { lat: 13.7373, lng: 100.5608 },
-      "Sai Mai": { lat: 13.9234, lng: 100.3534 },
-      "Bang Khen": { lat: 13.8234, lng: 100.6534 },
-      "Prawet": { lat: 13.7000, lng: 100.6000 },
-      "Khlong Sam Wa": { lat: 13.8133, lng: 100.7324 },
-      "Phra Khanong": { lat: 13.7000, lng: 100.6000 },
-      "Bang Khae": { lat: 13.7287, lng: 100.5347 },
-      "Suan Luang": { lat: 13.7000, lng: 100.6000 },
-      "Thawi Watthana": { lat: 13.7287, lng: 100.5347 },
-      "Bang Na": { lat: 13.7000, lng: 100.6000 },
-      "Bang Khun Thian": { lat: 13.7287, lng: 100.5347 },
-      "Taling Chan": { lat: 13.7287, lng: 100.5347 },
-      "Chatuchak": { lat: 13.8234, lng: 100.5534 },
-      "Huai Khwang": { lat: 13.7287, lng: 100.5608 },
-      "Nong Chok": { lat: 13.7000, lng: 100.6000 },
-      "Wang Thonglang": { lat: 13.8234, lng: 100.6534 },
-      "Min Buri": { lat: 13.8133, lng: 100.7324 },
-      "Din Daeng": { lat: 13.7287, lng: 100.5608 },
-      "Lat Krabang": { lat: 13.7000, lng: 100.6000 },
-      "Bueng Kum": { lat: 13.8234, lng: 100.6534 },
-      "Don Mueang": { lat: 13.9234, lng: 100.5534 },
-      "Saphan Sung": { lat: 13.7000, lng: 100.6000 },
-      "Bang Kapi": { lat: 13.8234, lng: 100.6534 },
-      "Phasi Charoen": { lat: 13.7287, lng: 100.5347 },
-      "Khlong Toei": { lat: 13.7287, lng: 100.5608 },
-      "Khan Na Yao": { lat: 13.8234, lng: 100.6534 },
-      "Lak Si": { lat: 13.9234, lng: 100.4534 },
-      "Nong Khaem": { lat: 13.7287, lng: 100.5347 },
-      "Bang Phlat": { lat: 13.7287, lng: 100.5347 },
-      "Phaya Thai": { lat: 13.7287, lng: 100.5608 },
-      "Sathon": { lat: 13.7287, lng: 100.5347 },
-      "Bang Bon": { lat: 13.7287, lng: 100.5347 },
-      "Bang Sue": { lat: 13.8234, lng: 100.5534 },
-      "Thon Buri": { lat: 13.7287, lng: 100.5347 },
-      "Thung Khru": { lat: 13.7287, lng: 100.5347 },
-      "Yan Nawa": { lat: 13.7287, lng: 100.5347 }
-    };
+// --- Enhanced district auto-complete suggestions ---
+function getDistrictAutocompleteSuggestions(query) {
+  const queryLower = query.toLowerCase().trim();
+  
+  // Filter districts that match the query
+  const matchingDistricts = ALL_BANGKOK_DISTRICTS.filter(district => 
+    district.toLowerCase().includes(queryLower)
+  );
+  
+  // Sort by relevance (exact matches first, then partial matches)
+  const sortedDistricts = matchingDistricts.sort((a, b) => {
+    const aLower = a.toLowerCase();
+    const bLower = b.toLowerCase();
     
-    const center = districtCenters[districtName] || { lat: 13.7563, lng: 100.5018 };
-    const data = DISTRICT_DATA[districtName];
+    // Exact match gets highest priority
+    if (aLower === queryLower) return -1;
+    if (bLower === queryLower) return 1;
     
-    return {
-      objectId: `TH_${districtName.replace(/\s+/g, '_')}`,
-      objectType: 'DISTRICT',
-      displayText: districtName,
-      displayType: 'Bangkok District',
-      displayDescription: `${data.propertyCount} properties • ${formatCurrency(data.avgPricePerWah)}/wah`,
-      latitude: center.lat,
-      longitude: center.lng,
-      districtData: data,
-      districtName: districtName
-    };
+    // Starts with query gets second priority
+    if (aLower.startsWith(queryLower)) return -1;
+    if (bLower.startsWith(queryLower)) return 1;
+    
+    // Otherwise sort alphabetically
+    return aLower.localeCompare(bLower);
   });
   
-  // Filter suggestions based on query (more flexible matching)
-  const queryLower = query.toLowerCase();
-  const filtered = districtSuggestions.filter(suggestion => {
-    const textMatch = suggestion.displayText.toLowerCase().includes(queryLower);
-    const descMatch = suggestion.displayDescription.toLowerCase().includes(queryLower);
-    const partialMatch = suggestion.displayText.toLowerCase().split(' ').some(word => 
-      word.startsWith(queryLower) || queryLower.startsWith(word)
-    );
-    const wordMatch = queryLower.split(' ').some(queryWord => 
-      suggestion.displayText.toLowerCase().includes(queryWord)
-    );
-    return textMatch || descMatch || partialMatch || wordMatch;
-  });
+  // Limit to top 10 results
+  const limitedResults = sortedDistricts.slice(0, 10);
   
-  console.log('🔍 Filtered results for query "' + query + '":', filtered.length, 'items');
-  filtered.forEach(item => {
-    console.log('  -', item.displayText, '(', item.displayDescription, ')');
-  });
+  // Convert to autocomplete format
+  return limitedResults.map(districtName => ({
+    id: districtName,
+    name: districtName,
+    type: 'district',
+    description: `Bangkok District`,
+    coordinates: getDistrictCoordinates(districtName)
+  }));
+}
+
+// --- Get district coordinates ---
+function getDistrictCoordinates(districtName) {
+  // District center coordinates (approximate)
+  const districtCenters = {
+    "Watthana": { lat: 13.7373, lng: 100.5608 },
+    "Phra Khanong": { lat: 13.7000, lng: 100.6000 },
+    "Huai Khwang": { lat: 13.7287, lng: 100.5608 },
+    "Wang Thonglang": { lat: 13.8234, lng: 100.6534 },
+    "Prawet": { lat: 13.7000, lng: 100.6000 },
+    "Bang Khae": { lat: 13.7287, lng: 100.5347 },
+    "Chatuchak": { lat: 13.8234, lng: 100.5534 },
+    "Bang Kapi": { lat: 13.8234, lng: 100.6534 },
+    "Khan Na Yao": { lat: 13.8234, lng: 100.6534 },
+    "Phaya Thai": { lat: 13.7287, lng: 100.5608 },
+    "Bang Khun Thian": { lat: 13.7287, lng: 100.5347 },
+    "Thon Buri": { lat: 13.7287, lng: 100.5347 },
+    "Bang Na": { lat: 13.7000, lng: 100.6000 },
+    "Taling Chan": { lat: 13.7287, lng: 100.5347 },
+    "Lat Phrao": { lat: 13.8133, lng: 100.7324 },
+    "Thawi Watthana": { lat: 13.7287, lng: 100.5347 },
+    "Yan Nawa": { lat: 13.7287, lng: 100.5347 },
+    "Don Mueang": { lat: 13.9234, lng: 100.5534 },
+    "Suan Luang": { lat: 13.7000, lng: 100.6000 },
+    "Bang Khen": { lat: 13.8234, lng: 100.6534 },
+    "Phasi Charoen": { lat: 13.7287, lng: 100.5347 },
+    "Khlong Sam Wa": { lat: 13.8133, lng: 100.7324 },
+    "Bueng Kum": { lat: 13.8234, lng: 100.6534 },
+    "Din Daeng": { lat: 13.7287, lng: 100.5608 },
+    "Sai Mai": { lat: 13.9234, lng: 100.3534 },
+    "Bang Phlat": { lat: 13.7287, lng: 100.5347 },
+    "Lak Si": { lat: 13.9234, lng: 100.4534 },
+    "Min Buri": { lat: 13.8133, lng: 100.7324 },
+    "Nong Khaem": { lat: 13.7287, lng: 100.5347 },
+    "Nong Chok": { lat: 13.7000, lng: 100.6000 },
+    "Bang Bon": { lat: 13.7287, lng: 100.5347 },
+    "Chom Thong": { lat: 13.7287, lng: 100.5347 },
+    "Bangkok Yai": { lat: 13.7287, lng: 100.5347 },
+    "Lat Krabang": { lat: 13.7000, lng: 100.6000 }
+  };
   
-  console.log('🎭 Mock auto-complete suggestions:', filtered);
-  return filtered.slice(0, 10); // Limit to 10 suggestions
+  return districtCenters[districtName] || { lat: 13.7563, lng: 100.5018 }; // Default to Bangkok center
 }
 
 // --- Main App Component ---
@@ -206,9 +212,9 @@ export default function LandValuationApp() {
         console.log('🔍 Setting auto-complete results:', suggestions);
         console.log('🔍 Results length:', suggestions.length);
         console.log('🔍 Results details:', suggestions.map(s => ({ 
-          text: s.displayText, 
-          type: s.objectType, 
-          desc: s.displayDescription 
+          text: s.name, 
+          type: s.type, 
+          desc: s.description 
         })));
         
         setAutocompleteResults(suggestions);
@@ -359,56 +365,53 @@ export default function LandValuationApp() {
   }, []);
 
   const handleAutocompleteSelect = async (locationObject) => {
-    setSearchQuery(locationObject.displayText || locationObject.name || '');
+    setSearchQuery(locationObject.name || '');
     setSelectedLocation(locationObject);
     setShowAutocomplete(false);
     setAutocompleteResults([]);
     setSelectedAutocompleteIndex(-1);
     
     // Handle district selection
-    const districtName = locationObject.displayText;
+    const districtName = locationObject.name;
     const districtData = DISTRICT_DATA[districtName];
     
     if (districtData) {
       // Use district center coordinates from our data
       const districtCenters = {
-        "Lat Phrao": { lat: 13.8133, lng: 100.7324 },
         "Watthana": { lat: 13.7373, lng: 100.5608 },
-        "Sai Mai": { lat: 13.9234, lng: 100.3534 },
-        "Bang Khen": { lat: 13.8234, lng: 100.6534 },
-        "Prawet": { lat: 13.7000, lng: 100.6000 },
-        "Khlong Sam Wa": { lat: 13.8133, lng: 100.7324 },
         "Phra Khanong": { lat: 13.7000, lng: 100.6000 },
-        "Bang Khae": { lat: 13.7287, lng: 100.5347 },
-        "Suan Luang": { lat: 13.7000, lng: 100.6000 },
-        "Thawi Watthana": { lat: 13.7287, lng: 100.5347 },
-        "Bang Na": { lat: 13.7000, lng: 100.6000 },
-        "Bang Khun Thian": { lat: 13.7287, lng: 100.5347 },
-        "Taling Chan": { lat: 13.7287, lng: 100.5347 },
-        "Chatuchak": { lat: 13.8234, lng: 100.5534 },
         "Huai Khwang": { lat: 13.7287, lng: 100.5608 },
-        "Nong Chok": { lat: 13.7000, lng: 100.6000 },
         "Wang Thonglang": { lat: 13.8234, lng: 100.6534 },
-        "Min Buri": { lat: 13.8133, lng: 100.7324 },
-        "Din Daeng": { lat: 13.7287, lng: 100.5608 },
-        "Lat Krabang": { lat: 13.7000, lng: 100.6000 },
-        "Bueng Kum": { lat: 13.8234, lng: 100.6534 },
-        "Don Mueang": { lat: 13.9234, lng: 100.5534 },
-        "Saphan Sung": { lat: 13.7000, lng: 100.6000 },
+        "Prawet": { lat: 13.7000, lng: 100.6000 },
+        "Bang Khae": { lat: 13.7287, lng: 100.5347 },
+        "Chatuchak": { lat: 13.8234, lng: 100.5534 },
         "Bang Kapi": { lat: 13.8234, lng: 100.6534 },
-        "Phasi Charoen": { lat: 13.7287, lng: 100.5347 },
-        "Khlong Toei": { lat: 13.7287, lng: 100.5608 },
         "Khan Na Yao": { lat: 13.8234, lng: 100.6534 },
-        "Lak Si": { lat: 13.9234, lng: 100.4534 },
-        "Nong Khaem": { lat: 13.7287, lng: 100.5347 },
-        "Bang Phlat": { lat: 13.7287, lng: 100.5347 },
         "Phaya Thai": { lat: 13.7287, lng: 100.5608 },
-        "Sathon": { lat: 13.7287, lng: 100.5347 },
-        "Bang Bon": { lat: 13.7287, lng: 100.5347 },
-        "Bang Sue": { lat: 13.8234, lng: 100.5534 },
+        "Bang Khun Thian": { lat: 13.7287, lng: 100.5347 },
         "Thon Buri": { lat: 13.7287, lng: 100.5347 },
-        "Thung Khru": { lat: 13.7287, lng: 100.5347 },
-        "Yan Nawa": { lat: 13.7287, lng: 100.5347 }
+        "Bang Na": { lat: 13.7000, lng: 100.6000 },
+        "Taling Chan": { lat: 13.7287, lng: 100.5347 },
+        "Lat Phrao": { lat: 13.8133, lng: 100.7324 },
+        "Thawi Watthana": { lat: 13.7287, lng: 100.5347 },
+        "Yan Nawa": { lat: 13.7287, lng: 100.5347 },
+        "Don Mueang": { lat: 13.9234, lng: 100.5534 },
+        "Suan Luang": { lat: 13.7000, lng: 100.6000 },
+        "Bang Khen": { lat: 13.8234, lng: 100.6534 },
+        "Phasi Charoen": { lat: 13.7287, lng: 100.5347 },
+        "Khlong Sam Wa": { lat: 13.8133, lng: 100.7324 },
+        "Bueng Kum": { lat: 13.8234, lng: 100.6534 },
+        "Din Daeng": { lat: 13.7287, lng: 100.5608 },
+        "Sai Mai": { lat: 13.9234, lng: 100.3534 },
+        "Bang Phlat": { lat: 13.7287, lng: 100.5347 },
+        "Lak Si": { lat: 13.9234, lng: 100.4534 },
+        "Min Buri": { lat: 13.8133, lng: 100.7324 },
+        "Nong Khaem": { lat: 13.7287, lng: 100.5347 },
+        "Nong Chok": { lat: 13.7000, lng: 100.6000 },
+        "Bang Bon": { lat: 13.7287, lng: 100.5347 },
+        "Chom Thong": { lat: 13.7287, lng: 100.5347 },
+        "Bangkok Yai": { lat: 13.7287, lng: 100.5347 },
+        "Lat Krabang": { lat: 13.7000, lng: 100.6000 }
       };
       
       const districtCenter = districtCenters[districtName];
@@ -485,7 +488,15 @@ export default function LandValuationApp() {
       };
       const locationObject = await getDDPropertyLocationObject(searchQuery, headers);
       if (!locationObject) {
-        alert('Location not found. Please try a more specific address.');
+        // Use fallback coordinates and proceed with search
+        console.log('⚠️ Location not found via API, using fallback coordinates');
+        const fallbackLocation = {
+          latitude: 13.7563,
+          longitude: 100.5018,
+          name: searchQuery,
+          districtName: searchQuery
+        };
+        await searchProperties(fallbackLocation);
         setIsLoading(false);
         return;
       }
@@ -552,7 +563,7 @@ export default function LandValuationApp() {
         const lat = locationObject.latitude || 13.7563;
         const lng = locationObject.longitude || 100.5018;
         // Pass district name if available in locationObject
-        const districtName = locationObject.districtName || locationObject.displayText;
+        const districtName = locationObject.districtName || locationObject.name;
         generateAIValuation(allProperties, lat, lng, districtName);
       } else {
         const lat = locationObject.latitude || 13.7563;
@@ -560,7 +571,7 @@ export default function LandValuationApp() {
         const mockProperties = generateMockProperties(lat, lng);
         setSearchResults(mockProperties);
         // Pass district name if available in locationObject
-        const districtName = locationObject.districtName || locationObject.displayText;
+        const districtName = locationObject.districtName || locationObject.name;
         generateAIValuation(mockProperties, lat, lng, districtName);
       }
     } catch (error) {
@@ -569,7 +580,7 @@ export default function LandValuationApp() {
       const mockProperties = generateMockProperties(lat, lng);
       setSearchResults(mockProperties);
       // Pass district name if available in locationObject
-      const districtName = locationObject.districtName || locationObject.displayText;
+      const districtName = locationObject.districtName || locationObject.name;
       generateAIValuation(mockProperties, lat, lng, districtName);
     }
   };
@@ -781,7 +792,7 @@ export default function LandValuationApp() {
                 value={searchQuery}
                 onChange={handleSearchInputChange}
                 onKeyDown={handleSearchInputKeyDown}
-                placeholder="Enter Bangkok district name (e.g., 'Bang Khen', 'Chatuchak', 'Sukhumvit')"
+                placeholder="Search for a Bangkok district (e.g., 'Bang Khen', 'Chatuchak', 'Watthana')"
                 className="search-input"
                 autoComplete="off"
               />
@@ -794,45 +805,35 @@ export default function LandValuationApp() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      <span>Searching locations...</span>
+                      <span>Searching districts...</span>
                     </div>
                   ) : autocompleteResults.length > 0 ? (
                     autocompleteResults.map((suggestion, index) => (
                                               <div
-                          key={suggestion.objectId || index}
+                          key={suggestion.id || index}
                           className={`autocomplete-item ${index === selectedAutocompleteIndex ? 'selected' : ''}`}
                           onClick={() => handleAutocompleteSelect(suggestion)}
                           onMouseEnter={() => setSelectedAutocompleteIndex(index)}
                         >
                           <div className="autocomplete-text">
-                            <span className="autocomplete-main">{suggestion.displayText || suggestion.name}</span>
-                            {suggestion.objectType && (
-                              <span className="autocomplete-type">{suggestion.objectType}</span>
+                            <span className="autocomplete-main">{suggestion.name}</span>
+                            {suggestion.type && (
+                              <span className="autocomplete-type">{suggestion.type}</span>
                             )}
                           </div>
                           <div className="autocomplete-description">
-                            {suggestion.displayDescription}
+                            {suggestion.description}
                           </div>
-                          {suggestion.districtData && (
-                            <div className="autocomplete-district-info">
-                              <span className="district-price-range">
-                                💰 {suggestion.districtData.minPrice.toLocaleString()} - {suggestion.districtData.maxPrice.toLocaleString()} THB
-                              </span>
-                              <span className="district-size">
-                                📏 Avg: {suggestion.districtData.avgSizeWah.toFixed(0)} sq.wah
-                              </span>
-                            </div>
-                          )}
-                          {suggestion.latitude && suggestion.longitude && (
+                          {suggestion.coordinates && (
                             <div className="autocomplete-coords">
-                              📍 {suggestion.latitude.toFixed(4)}, {suggestion.longitude.toFixed(4)}
+                              📍 {suggestion.coordinates.lat.toFixed(4)}, {suggestion.coordinates.lng.toFixed(4)}
                             </div>
                           )}
                         </div>
                     ))
                   ) : (
                     <div className="autocomplete-no-results">
-                      <span>No locations found</span>
+                      <span>No districts found</span>
                     </div>
                   )}
                 </div>
@@ -1065,6 +1066,11 @@ export default function LandValuationApp() {
                   </div>
                 )}
                 
+                {/* Advanced Factor Analysis */}
+                {aiValuation.advancedValuation && (
+                  <AdvancedFactorAnalysis advancedValuation={aiValuation.advancedValuation} />
+                )}
+                
                 <div className="ai-factors">
                   <h4>Analysis Factors:</h4>
                   <ul>
@@ -1253,6 +1259,10 @@ export default function LandValuationApp() {
                 )}
               </div>
 
+              <div className="settings-section">
+                <DataStatus />
+              </div>
+              
               <div className="settings-section">
                 <DistrictStats />
               </div>
